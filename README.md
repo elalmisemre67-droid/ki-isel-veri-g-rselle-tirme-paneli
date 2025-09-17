@@ -23,3 +23,4 @@ Veriler **localStorage** üzerinde tutulur ve grafikler **Chart.js** ile görsel
 ---
 
 ## Kullanım
+file:///C:/Users/elalm/Pictures/Screenshots/backend/Githubproje1.html
