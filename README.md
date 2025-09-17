@@ -22,5 +22,6 @@ Veriler **localStorage** üzerinde tutulur ve grafikler **Chart.js** ile görsel
 
 ---
 
-## Kullanım
+## Dosyayı acmak için burayı kopyalayıp tarayıcıya kopyalaya bilirsiniz.
+
 file:///C:/Users/elalm/Pictures/Screenshots/backend/Githubproje1.html
