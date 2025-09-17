@@ -1,4 +1,4 @@
-
+<img width="1777" height="932" alt="image" src="https://github.com/user-attachments/assets/0a6575af-0047-437b-a097-bbeedb17b85c" />
 
        
           # 📊 Kişisel Veri Görselleştirme Paneli
@@ -22,6 +22,7 @@ Veriler **localStorage** üzerinde tutulur ve grafikler **Chart.js** ile görsel
 
 ---
 
-## Dosyayı acmak için burayı kopyalayıp tarayıcıya kopyalaya bilirsiniz.
+## Dosyayı acmak için burayı kopyalayıp tarayıcıya yapıştırıp enter basmanız yeterlidir:)
+
 
 file:///C:/Users/elalm/Pictures/Screenshots/backend/Githubproje1.html
