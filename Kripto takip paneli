@@ -1,0 +1,14 @@
+# Kripto Takip Paneli
+ Gerçek zamanlı veri çeken, grafiklerle desteklenen bir takip paneli.
+
+##  Özellikler
+- Coin arama
+- 7 günlük grafikhttps://github.com/elalmisemre67-droid/ki-isel-veri-g-rselle-tirme-paneli/tree/main
+- 24s ve 7g değişim yüzdeleri
+- Dark mode desteği
+- Gerçek zamanlı API ile veri güncelleme
+-Popüler kriptolar takip
+-Fiyatlar sadece sayfa yenilendiğinde güncelleniyor
+-Otomatik olarak 10 saniyede bir, 1 dakikada bir kendini yenilemiyor
+ [Siteye girmek için tıklamak veya kopyalayıp tarayıcıya yapıştırıp enter basmanız yeterlidir}
+Link:) http://127.0.0.1:5500/Kripto%20takip%20paneli.html
