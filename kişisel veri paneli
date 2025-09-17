@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kişisel Veri Görselleştirme Paneli</title>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{--bg:#f3f6fb;--card:#fff;--muted:#64748b;--accent:#3b82f6;--glass:rgba(255,255,255,0.7)}
+    [data-theme='dark']{--bg:#0b1220;--card:#0f1724;--muted:#a3b1c4;--accent:#60a5fa;--glass:rgba(255,255,255,0.03)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--muted);background:linear-gradient(180deg,var(--bg),#fff)}
+    header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;gap:12px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#06b6d4);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+    .controls{display:flex;gap:8px;align-items:center}
+    .chip{padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,0.06);background:var(--card);cursor:pointer}
+    .container{max-width:1150px;margin:12px auto;padding:0 16px}
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:16px}
+
+    /* form */
+    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 10px 30px rgba(2,6,23,0.06)}
+    label{display:block;font-size:13px;margin-top:8px;color:var(--muted)}
+    input, select{width:100%;padding:8px;border-radius:8px;border:1px solid #e6eef8;margin-top:6px}
+    .row{display:flex;gap:8px}
+    .row > *{flex:1}
+    button{cursor:pointer;padding:10px 12px;border-radius:8px;border:0;background:var(--accent);color:white;font-weight:700}
+    button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(59,130,246,0.14)}
+    .small{padding:8px 10px;font-size:13px}
+
+    /* charts area */
+    .charts{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+    canvas{background:transparent;border-radius:8px}
+
+    /* entries list */
+    .entries{display:flex;flex-direction:column;gap:8px;margin-top:12px;max-height:360px;overflow:auto}
+    .entry{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;background:linear-gradient(180deg,#ffffff, #fbfdff);border:1px solid #eef6ff}
+    .entry .left{font-size:13px;color:#111}
+    .entry .meta{font-size:12px;color:var(--muted)}
+
+    /* responsive */
+    @media (max-width:980px){.grid{grid-template-columns:1fr}.charts{grid-template-columns:1fr}}
+    @media (max-width:520px){header{padding:10px} .brand .logo{width:36px;height:36px}}
+
+    footer{max-width:1150px;margin:18px auto;padding:0 16px 40px 16px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">PD</div>
+      <div>
+        <div style="font-weight:800">Kişisel Veri Paneli</div>
+        <div style="font-size:12px;color:var(--muted)">Yerel veri (localStorage) • JSON yedek</div>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="chip" id="todayBtn">Bugün</div>
+      <div class="chip" id="weekBtn">Bu Hafta</div>
+      <div class="chip" id="monthBtn">Bu Ay</div>
+      <div class="chip" id="themeToggle">🌙</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="grid">
+      <!-- LEFT: Form + entries -->
+      <section>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <strong>Günlük Veri Ekle</strong>
+            <div style="font-size:12px;color:var(--muted)">Tarih: <input type="date" id="date" style="width:150px;display:inline-block;margin-left:8px" /></div>
+          </div>
+
+          <label>Uyku süresi (saat)</label>
+          <input type="number" id="sleep" min="0" step="0.1" placeholder="Örn: 7.5" />
+
+          <label>Adım sayısı</label>
+          <input type="number" id="steps" min="0" step="1" placeholder="Örn: 8000" />
+
+          <div class="row">
+            <div>
+              <label>Ruh hali (1-5)</label>
+              <select id="mood">
+                <option value="1">1 😞</option>
+                <option value="2">2 😕</option>
+                <option value="3" selected>3 😐</option>
+                <option value="4">4 🙂</option>
+                <option value="5">5 😄</option>
+              </select>
+            </div>
+            <div>
+              <label>Çalışma süresi (saat)</label>
+              <input type="number" id="work" min="0" step="0.1" placeholder="Örn: 4" />
+            </div>
+          </div>
+
+          <label>Sağlıklı beslenme puanı (1-5)</label>
+          <select id="nutrition">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button id="saveBtn">Kaydet</button>
+            <button id="clearBtn" class="ghost">Hepsini Temizle</button>
+            <button id="exportBtn" class="ghost">JSON Dışa Aktar</button>
+            <label class="chip ghost" style="display:inline-flex;align-items:center;padding:8px;cursor:pointer">İçe Aktar <input type="file" id="importFile" style="display:none" accept="application/json"/></label>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <strong>Girişler</strong>
+          <div class="entries" id="entries"></div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Charts -->
+      <section>
+        <div class="card">
+          <strong>Filtre & Özet</strong>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+            <input id="search" placeholder="Tarihe göre ara (YYYY-MM-DD) ya da boş bırak" style="flex:1;padding:8px;border-radius:8px;border:1px solid #eef6ff" />
+            <button id="applyFilter" class="small">Uygula</button>
+            <button id="resetFilter" class="small ghost">Sıfırla</button>
+          </div>
+
+          <div style="margin-top:12px" class="charts">
+            <div>
+              <canvas id="sleepChart"></canvas>
+            </div>
+            <div>
+              <canvas id="moodChart"></canvas>
+            </div>
+            <div>
+              <canvas id="stepsChart"></canvas>
+            </div>
+            <div>
+              <canvas id="workChart"></canvas>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-top:12px;align-items:center;justify-content:space-between">
+            <div style="flex:1">
+              <strong>Verimlilik (ortalama puan)</strong>
+              <canvas id="effChart" style="max-width:260px"></canvas>
+            </div>
+            <div style="flex-basis:220px;text-align:right;color:var(--muted)">
+              <div id="summary"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    Bu panel localStorage kullanır — JSON yedekleme ile verinizi kaydedip geri yükleyebilirsiniz. İleride Firebase entegrasyonu eklenebilir.
+  </footer>
+
+  <script>
+    // ------------------ Utilities ------------------
+    const todayStr = ()=>new Date().toISOString().slice(0,10);
+    const $ = (id)=>document.getElementById(id);
+
+    // ------------------ Data handling ------------------
+    const STORAGE_KEY = 'personal.dashboard.data.v1';
+    let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+
+    // seed with some example if empty (optional)
+    if(!data.length){
+      const d = new Date();
+      data = [
+        {date: todayStr(), sleep:7.5, steps:8000, mood:4, work:3, nutrition:4},
+        {date: new Date(Date.now()-86400000).toISOString().slice(0,10), sleep:6, steps:5000, mood:3, work:2.5, nutrition:3}
+      ];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)) }
+
+    // ------------------ DOM bindings ------------------
+    const dateInput = $('date'); dateInput.value = todayStr();
+    const sleepInput = $('sleep'), stepsInput = $('steps'), moodInput = $('mood'), workInput = $('work'), nutritionInput = $('nutrition');
+    const saveBtn = $('saveBtn'), clearBtn = $('clearBtn'), entriesEl = $('entries');
+    const exportBtn = $('exportBtn'), importFile = $('importFile');
+    const todayBtn = $('todayBtn'), weekBtn = $('weekBtn'), monthBtn = $('monthBtn');
+    const themeToggle = $('themeToggle');
+    const searchInput = $('search'), applyFilter = $('applyFilter'), resetFilter = $('resetFilter');
+
+    // ------------------ Charts init ------------------
+    const sleepCtx = document.getElementById('sleepChart').getContext('2d');
+    const moodCtx = document.getElementById('moodChart').getContext('2d');
+    const stepsCtx = document.getElementById('stepsChart').getContext('2d');
+    const workCtx = document.getElementById('workChart').getContext('2d');
+    const effCtx = document.getElementById('effChart').getContext('2d');
+
+    let sleepChart, moodChart, stepsChart, workChart, effChart;
+
+    function createCharts(){
+      const baseOptions = {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}};
+      sleepChart = new Chart(sleepCtx, {type:'line',data:{labels:[],datasets:[{label:'Uyku (saat)',data:[],tension:0.35,borderColor:getComputedStyle(document.documentElement).getPropertyValue('--accent')||'#3b82f6',fill:false}]},options: {...baseOptions,scales:{y:{beginAtZero:true}}}});
+      moodChart = new Chart(moodCtx, {type:'line',data:{labels:[],datasets:[{label:'Ruh hali',data:[],tension:0.4,borderColor:'#f59e0b',fill:false}]},options:{...baseOptions,scales:{y:{min:1,max:5}}}});
+      stepsChart = new Chart(stepsCtx, {type:'bar',data:{labels:[],datasets:[{label:'Adımlar',data:[],backgroundColor:'rgba(59,130,246,0.7)'}]},options:{...baseOptions,scales:{y:{beginAtZero:true}}}});
+      workChart = new Chart(workCtx, {type:'bar',data:{labels:[],datasets:[{label:'Çalışma (saat)',data:[],backgroundColor:'rgba(34,197,94,0.7)'}]},options:{...baseOptions,scales:{y:{beginAtZero:true}}}});
+      effChart = new Chart(effCtx, {type:'doughnut',data:{labels:['Uyku','Beslenme','Ruh Hali'],datasets:[{data:[0,0,0],backgroundColor:['#60a5fa','#34d399','#f59e0b']}]},options:{responsive:true,maintainAspectRatio:false}});
+    }
+
+    createCharts();
+
+    // ------------------ Rendering ------------------
+    function renderEntries(filtered){
+      entriesEl.innerHTML='';
+      const list = filtered || data.slice().sort((a,b)=>b.date.localeCompare(a.date));
+      list.forEach((d, idx)=>{
+        const el = document.createElement('div'); el.className='entry';
+        el.innerHTML = `<div class="left"><strong>${d.date}</strong><div class="meta">Uyku:${d.sleep}h • Adım:${d.steps} • Ruh:${d.mood} • Çalışma:${d.work}h • Besl:${d.nutrition}</div></div><div style="display:flex;gap:8px"><button class="small ghost" data-idx="${idx}" onclick="editEntry(${idx})">Düzenle</button><button class="small" onclick="deleteEntry(${idx})">Sil</button></div>`;
+        entriesEl.appendChild(el);
+      });
+      updateCharts(list);
+    }
+
+    function updateCharts(list){
+      const items = list.slice().sort((a,b)=>a.date.localeCompare(b.date));
+      const labels = items.map(i=>i.date);
+      sleepChart.data.labels = labels; sleepChart.data.datasets[0].data = items.map(i=>i.sleep||0); sleepChart.update();
+      moodChart.data.labels = labels; moodChart.data.datasets[0].data = items.map(i=>i.mood||0); moodChart.update();
+      stepsChart.data.labels = labels; stepsChart.data.datasets[0].data = items.map(i=>i.steps||0); stepsChart.update();
+      workChart.data.labels = labels; workChart.data.datasets[0].data = items.map(i=>i.work||0); workChart.update();
+
+      // verimlilik: ortalama normalize edilmiş 0-100
+      if(items.length){
+        const avgSleep = items.reduce((s,x)=>s+(x.sleep||0),0)/items.length;
+        const avgNutrition = items.reduce((s,x)=>s+(x.nutrition||0),0)/items.length;
+        const avgMood = items.reduce((s,x)=>s+(x.mood||0),0)/items.length;
+        // normalize: sleep/9*100 (assuming 9h ideal), nutrition/5*100, mood/5*100
+        const val1 = Math.min(100, (avgSleep/9)*100);
+        const val2 = Math.min(100, (avgNutrition/5)*100);
+        const val3 = Math.min(100, (avgMood/5)*100);
+        effChart.data.datasets[0].data = [val1, val2, val3]; effChart.update();
+        $('summary').innerHTML = `<div>Ortalama uyku: ${avgSleep.toFixed(1)}h</div><div>Ortalama çalışma: ${(items.reduce((s,x)=>s+(x.work||0),0)/items.length).toFixed(1)}h</div><div>Ortalama adım: ${Math.round(items.reduce((s,x)=>s+(x.steps||0),0)/items.length)}</div>`;
+      } else { effChart.data.datasets[0].data = [0,0,0]; effChart.update(); $('summary').innerHTML = '' }
+    }
+
+    // ------------------ CRUD ------------------
+    saveBtn.addEventListener('click', ()=>{
+      const rec = {date: dateInput.value || todayStr(), sleep: parseFloat(sleepInput.value)||0, steps: parseInt(stepsInput.value)||0, mood: parseInt(moodInput.value)||3, work: parseFloat(workInput.value)||0, nutrition: parseInt(nutritionInput.value)||3};
+      // if existing same date, replace
+      const i = data.findIndex(x=>x.date===rec.date);
+      if(i>=0){ data[i] = rec; } else { data.push(rec); }
+      save(); renderEntries();
+      showToast('Kayıt başarıyla kaydedildi');
+    });
+
+    window.deleteEntry = function(idx){ if(confirm('Kaydı silmek istediğine emin misin?')){ data.splice(idx,1); save(); renderEntries(); showToast('Kayıt silindi') } }
+    window.editEntry = function(idx){
+      const rec = data[idx]; dateInput.value = rec.date; sleepInput.value = rec.sleep; stepsInput.value = rec.steps; moodInput.value = rec.mood; workInput.value = rec.work; nutritionInput.value = rec.nutrition; showToast('Kayıt düzenleme modunda (kaydet tuşu ile güncelleyebilirsin)')
+    }
+
+    clearBtn.addEventListener('click', ()=>{ if(confirm('Tüm kayıtları temizlemek istediğine emin misin?')){ data=[]; save(); renderEntries(); showToast('Tüm kayıtlar temizlendi') } });
+
+    // ------------------ Filters ------------------
+    todayBtn.addEventListener('click', ()=>{ const t = todayStr(); renderEntries(data.filter(d=>d.date===t)); });
+    weekBtn.addEventListener('click', ()=>{ const now = new Date(); const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()-6); renderEntries(data.filter(d=>new Date(d.date) >= start)); });
+    monthBtn.addEventListener('click', ()=>{ const now = new Date(); const start = new Date(now.getFullYear(), now.getMonth(), 1); renderEntries(data.filter(d=>new Date(d.date) >= start)); });
+
+    applyFilter.addEventListener('click', ()=>{
+      const q = searchInput.value.trim(); if(!q) return renderEntries(); renderEntries(data.filter(d=>d.date.includes(q)));
+    });
+    resetFilter.addEventListener('click', ()=>{ searchInput.value=''; renderEntries(); });
+
+    // ------------------ Import / Export ------------------
+    exportBtn.addEventListener('click', ()=>{
+      const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `pd-data-${todayStr()}.json`; a.click(); showToast('JSON dışa aktarıldı');
+    });
+
+    importFile.addEventListener('change', (e)=>{
+      const f = e.target.files[0]; if(!f) return; const reader = new FileReader(); reader.onload = (ev)=>{
+        try{ const imported = JSON.parse(ev.target.result); if(Array.isArray(imported)){ data = imported; save(); renderEntries(); showToast('JSON başarıyla içe aktarıldı') } else alert('JSON formatı geçersiz (dizi bekleniyor)') }catch(err){ alert('JSON okunamadı: '+err.message) }
+      }; reader.readAsText(f);
+    });
+
+    // ------------------ Theme ------------------
+    function setTheme(t){ document.documentElement.setAttribute('data-theme', t); localStorage.setItem('pd.theme', t); themeToggle.textContent = t==='dark' ? '☀️' : '🌙' }
+    const savedTheme = localStorage.getItem('pd.theme') || 'light'; setTheme(savedTheme);
+    themeToggle.addEventListener('click', ()=> setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'));
+
+    // ------------------ Toast ------------------
+    let toastTimer;
+    function showToast(msg){
+      clearTimeout(toastTimer);
+      let el = document.getElementById('pdToast');
+      if(!el){ el = document.createElement('div'); el.id='pdToast'; el.style.position='fixed'; el.style.right='16px'; el.style.bottom='16px'; el.style.padding='10px 12px'; el.style.background='var(--card)'; el.style.borderRadius='8px'; el.style.boxShadow='0 10px 30px rgba(2,6,23,0.12)'; document.body.appendChild(el); }
+      el.textContent = msg; el.style.display='block'; toastTimer = setTimeout(()=>el.style.display='none',2200);
+    }
+
+    // ------------------ Init render ------------------
+    renderEntries();
+
+  </script>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>
+</body>
+</html>
